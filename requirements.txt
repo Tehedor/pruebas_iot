@@ -1,0 +1,9 @@
+# Requirements for the minimal Flask IoT simulator (pruebas_iot)
+Flask>=2.2,<3
+gunicorn>=20.1.0
+python-dotenv>=0.21.0
+
+# Notes:
+# - `Flask` is required to run the app.
+# - `gunicorn` is optional for production deployments.
+# - `python-dotenv` is optional if you want to load env vars from a .env file.
