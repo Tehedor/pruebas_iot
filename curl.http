@@ -1,22 +1,23 @@
 ### ===============================
-### 1. CHECK HEALTH
+### 1. CHECK HEALTH (test simple)
 ### ===============================
 GET http://localhost:9090/telemetry
 Content-Type: application/json
 
+
+
 ### ===============================
 ### 2. PREPARAR PROVIDER (asset + policy + contract)
 ### ===============================
-POST http://localhost:1200/api/v1/assets
+
+### ---- ASSET ----
+POST http://localhost:1200/v3/assets
 Content-Type: application/json
 
 {
-  "asset": {
-    "@type": "Asset",
-    "properties": {
-      "asset:prop:id": "iot-stream-001",
-      "asset:prop:description": "IoT device stream"
-    }
+  "assetId": "iot-stream-001",
+  "properties": {
+    "description": "IoT device stream"
   },
   "dataAddress": {
     "type": "HttpData",
@@ -25,47 +26,55 @@ Content-Type: application/json
 }
 
 ###
-POST http://localhost:1200/api/v1/policydefinitions
+
+### ---- POLICY ----
+POST http://localhost:1200/v2/policydefinitions
 Content-Type: application/json
 
 {
-  "uid": "policy-iot",
+  "id": "policy-iot",
   "permissions": [
     {
       "edctype": "dataspaceconnector:permission",
       "target": "iot-stream-001",
-      "action": { "type": "use" }
+      "action": { "type": "USE" }
     }
   ]
 }
 
 ###
-POST http://localhost:1200/api/v1/contractdefinitions
+
+### ---- CONTRACT DEFINITION ----
+POST http://localhost:1200/v2/contractdefinitions
 Content-Type: application/json
 
 {
   "id": "contract-iot-001",
   "accessPolicyId": "policy-iot",
   "contractPolicyId": "policy-iot",
-  "assetsSelector": [
+  "criteria": [
     {
-      "operandLeft": "asset:prop:id",
+      "operandLeft": "assetId",
       "operator": "=",
       "operandRight": "iot-stream-001"
     }
   ]
 }
 
+
+
 ### ===============================
-### 3. INICIALIZAR APP (ONBOARD + VC + CONTRACT + TRANSFER)
+### 3. EJECUTAR INIT (/init)
 ### ===============================
 POST http://localhost:9090/init
 Content-Type: application/json
 
 {}
 
+
+
 ### ===============================
-### 4. ENVIAR TELEMETRÍA
+### 4. ENVIAR TELEMETRÍA (simulación real)
 ### ===============================
 POST http://localhost:9090/telemetry
 Content-Type: application/json

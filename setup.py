@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 import requests
 import json
-import sys
 
 PROVIDER = "http://127.0.0.1:1200"
 
-def pretty(x): 
+def pretty(x):
     return json.dumps(x, indent=2)
-
 
 def post(url, body):
     print(f"\n→ POST {url}")
@@ -19,18 +17,14 @@ def post(url, body):
         print("RAW:", r.text)
     return r
 
-
-# ----------------------------------------------------
-# 1. Crear Asset
-# ----------------------------------------------------
+# -------------------------
+# ASSET
+# -------------------------
 def create_asset():
-    asset = {
-        "asset": {
-            "@type": "Asset",
-            "properties": {
-                "asset:prop:id": "iot-stream-001",
-                "asset:prop:description": "IoT telemetry stream"
-            }
+    body = {
+        "assetId": "iot-stream-001",
+        "properties": {
+            "description": "IoT telemetry stream"
         },
         "dataAddress": {
             "type": "HttpData",
@@ -38,53 +32,50 @@ def create_asset():
         }
     }
 
-    post(f"{PROVIDER}/api/v1/assets", asset)
+    post(f"{PROVIDER}/v3/assets", body)
 
-
-# ----------------------------------------------------
-# 2. Crear Policy
-# ----------------------------------------------------
+# -------------------------
+# POLICY
+# -------------------------
 def create_policy():
     policy = {
-        "uid": "policy-iot",
+        "id": "policy-iot",
         "permissions": [
             {
                 "edctype": "dataspaceconnector:permission",
                 "target": "iot-stream-001",
-                "action": {"type": "use"}
+                "action": { "type": "USE" }
             }
         ]
     }
 
-    post(f"{PROVIDER}/api/v1/policydefinitions", policy)
+    post(f"{PROVIDER}/v2/policydefinitions", policy)
 
-
-# ----------------------------------------------------
-# 3. Crear Contract Definition
-# ----------------------------------------------------
+# -------------------------
+# CONTRACT DEFINITION
+# -------------------------
 def create_contract_definition():
     body = {
         "id": "contract-iot-001",
         "accessPolicyId": "policy-iot",
         "contractPolicyId": "policy-iot",
-        "assetsSelector": [
+        "criteria": [
             {
-                "operandLeft": "asset:prop:id",
+                "operandLeft": "assetId",
                 "operator": "=",
                 "operandRight": "iot-stream-001"
             }
         ]
     }
 
-    post(f"{PROVIDER}/api/v1/contractdefinitions", body)
+    post(f"{PROVIDER}/v2/contractdefinitions", body)
 
-
-# ----------------------------------------------------
+# -------------------------
 # MAIN
-# ----------------------------------------------------
+# -------------------------
 if __name__ == "__main__":
-    print("=== SETTING UP PROVIDER (ASSET + POLICY + CONTRACT) ===")
+    print("=== SETTING UP PROVIDER ===")
     create_asset()
     create_policy()
     create_contract_definition()
-    print("\n=== Provider setup complete ===")
+    print("=== PROVIDER READY ===")
