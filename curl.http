@@ -1,84 +1,76 @@
-# ============================================================
-#  HEALTH CHECK
-# ============================================================
+### ===============================
+### 1. CHECK HEALTH
+### ===============================
+GET http://localhost:9090/telemetry
+Content-Type: application/json
 
-GET http://localhost:9090/health
-Accept: application/json
+### ===============================
+### 2. PREPARAR PROVIDER (asset + policy + contract)
+### ===============================
+POST http://localhost:1200/api/v1/assets
+Content-Type: application/json
 
+{
+  "asset": {
+    "@type": "Asset",
+    "properties": {
+      "asset:prop:id": "iot-stream-001",
+      "asset:prop:description": "IoT device stream"
+    }
+  },
+  "dataAddress": {
+    "type": "HttpData",
+    "endpoint": "http://localhost:9090/telemetry"
+  }
+}
 
-# ============================================================
-#  INIT — Ejecuta TODO el flujo:
-#
-#   1. Onboarding Authority / Consumer / Provider
-#   2. OIDC4VCI → Consumer obtiene credencial
-#   3. OIDC4VP → Provider concede permiso
-#   4. Negociación de contrato
-#   5. Creación de Transfer Process
-#
-# Devuelve: authority_did, consumer_did, provider_did,
-#           contract_id, transfer_id
-# ============================================================
+###
+POST http://localhost:1200/api/v1/policydefinitions
+Content-Type: application/json
 
+{
+  "uid": "policy-iot",
+  "permissions": [
+    {
+      "edctype": "dataspaceconnector:permission",
+      "target": "iot-stream-001",
+      "action": { "type": "use" }
+    }
+  ]
+}
+
+###
+POST http://localhost:1200/api/v1/contractdefinitions
+Content-Type: application/json
+
+{
+  "id": "contract-iot-001",
+  "accessPolicyId": "policy-iot",
+  "contractPolicyId": "policy-iot",
+  "assetsSelector": [
+    {
+      "operandLeft": "asset:prop:id",
+      "operator": "=",
+      "operandRight": "iot-stream-001"
+    }
+  ]
+}
+
+### ===============================
+### 3. INICIALIZAR APP (ONBOARD + VC + CONTRACT + TRANSFER)
+### ===============================
 POST http://localhost:9090/init
 Content-Type: application/json
 
 {}
 
-
-###
-# Puedes guardar el transfer_id con VSCode REST Client:
-# Ejemplo:
-#   @transfer_id = {{response.body.$.transfer_id}}
-###
-
-
-
-# ============================================================
-#  TELEMETRÍA — Enviar datos IoT usando el transfer_id
-#  (Este método usa la API real de Rainbow Provider)
-# ============================================================
-
+### ===============================
+### 4. ENVIAR TELEMETRÍA
+### ===============================
 POST http://localhost:9090/telemetry
 Content-Type: application/json
 
 {
-    "transfer_id": "{{transfer_id}}",
-    "data": {
-        "temperature": 22.7,
-        "humidity": 48.5
-    }
-}
-
-
-# ============================================================
-#  TELEMETRÍA EXTRA — repetición con otros valores
-# ============================================================
-
-POST http://localhost:9090/telemetry
-Content-Type: application/json
-
-{
-    "transfer_id": "{{transfer_id}}",
-    "data": {
-        "temperature": 24.1,
-        "humidity": 55.2
-    }
-}
-
-
-
-# ============================================================
-#  TELEMETRÍA DE PRUEBA DE ERROR
-#  (usa un transfer_id inventado para comprobar manejo de errores)
-# ============================================================
-
-POST http://localhost:9090/telemetry
-Content-Type: application/json
-
-{
-    "transfer_id": "urn:uuid:0000-0000-0000-TEST",
-    "data": {
-        "temperature": 99.9,
-        "humidity": 0.0
-    }
+  "temperature": 22.5,
+  "humidity": 51
 }
